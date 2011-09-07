@@ -437,7 +437,7 @@ boolean QuectelM10::readSMS(char* msg, int msglength, char* number, int nlength)
   if (getStatus()==IDLE)
     return false;
   
-  _tf.setTimeout(0);
+  _tf.setTimeout(_GSM_DATA_TOUT_);
   _cell.flush();
   _cell << "AT+CMGL=\"REC UNREAD\",1" << endl; 
   if(_tf.find("+CMGL: "))

@@ -432,7 +432,7 @@ boolean QuectelM10::availableSMS(){return false;};
 
 boolean QuectelM10::readSMS(char* msg, int msglength, char* number, int nlength)
 {
-  int index;
+  long index;
 
   if (getStatus()==IDLE)
     return false;
@@ -442,18 +442,11 @@ boolean QuectelM10::readSMS(char* msg, int msglength, char* number, int nlength)
   _cell << "AT+CMGL=\"REC UNREAD\",1" << endl; 
   if(_tf.find("+CMGL: "))
   {
-    _tf.getString("", "\"", msg, msglength);
-
     index=_tf.getValue();
-    if(_tf.find("\"+"))
-    {
-       _tf.getString("", "\"", number, nlength);
-    };
-    if(_tf.find("\n"))
-    {	
-       _tf.getString("", "\nOK", msg, msglength);
-    };
+    _tf.getString("\"+", "\"", number, nlength);
+    _tf.getString("\n", "\nOK", msg, msglength);
     _cell << "AT+CMGD=" << index << endl;
+    _tf.find("OK");
     return true;
   };
   return false;

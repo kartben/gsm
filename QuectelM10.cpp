@@ -29,9 +29,9 @@ int QuectelM10::start(char* pin)
 
   _tf.setTimeout(_TCP_CONNECTION_TOUT_);
 
-  _cell.flush();
+  _cell->flush();
 // Just for old style software restart();  
-//  _cell << "AT+CFUN=1" <<  _BYTE(cr) << endl; //Comprobar
+//  (*_cell) << "AT+CFUN=1" <<  _BYTE(cr) << endl; //Comprobar
 //   if (!_tf.find("OK")) 
 //   {
 //     setStatus(IDLE);
@@ -57,25 +57,25 @@ int QuectelM10::configandwait(char* pin)
   for(int i=0; i<10; i++)
   {  	
     //Ask for register status to GPRS network.
-    _cell << "AT+CGREG?" <<  _BYTE(cr) << endl; 
+    (*_cell) << "AT+CGREG?" <<  _BYTE(cr) << endl; 
 
     //Se espera la unsolicited response de registered to network.
     if (_tf.find("+CGREG: 0,1")) 
     {
       setStatus(READY);
       
- 	_cell << "AT+CMGF=1" <<  _BYTE(cr) << endl; //SMS text mode.
+ 	(*_cell) << "AT+CMGF=1" <<  _BYTE(cr) << endl; //SMS text mode.
   	delay(200);
       // Buah, we should take this to readCall()
-	_cell << "AT+CLIP=1" <<  _BYTE(cr) << endl; //SMS text mode.
+	(*_cell) << "AT+CLIP=1" <<  _BYTE(cr) << endl; //SMS text mode.
   	delay(200);
-  	//_cell << "AT+QIDEACT" <<  _BYTE(cr) << endl; //To make sure not pending connection.
+  	//(*_cell) << "AT+QIDEACT" <<  _BYTE(cr) << endl; //To make sure not pending connection.
   	//delay(1000);
   
       return 1;
     }
     //Attach GPRS service.
-    //_cell << "AT+CGATT=1" <<  _BYTE(cr) << endl; 
+    //(*_cell) << "AT+CGATT=1" <<  _BYTE(cr) << endl; 
     //delay(500);
   }
   return 0;
@@ -90,8 +90,8 @@ int QuectelM10::shutdown()
   delay(1000);
 
   _tf.setTimeout(_TCP_CONNECTION_TOUT_);
-  _cell.flush();
-  _cell << "AT+CFUN=4" <<  _BYTE(cr) << endl; //Comprobar
+  _cell->flush();
+  (*_cell) << "AT+CFUN=4" <<  _BYTE(cr) << endl; //Comprobar
    if (_tf.find("OK")) 
    {
      setStatus(IDLE);
@@ -112,16 +112,16 @@ int QuectelM10::sendSMS(const char* to, const char* msg)
       
   _tf.setTimeout(_GSM_DATA_TOUT_);	//Timeout for expecting modem responses.
 
-  _cell.flush();
+  _cell->flush();
 
   //AT command to send a SMS. Destination telephone number 
-  _cell << "AT+CMGS=\"" << to << "\"" <<  _BYTE(cr) << endl; // Establecemos el destinatario
+  (*_cell) << "AT+CMGS=\"" << to << "\"" <<  _BYTE(cr) << endl; // Establecemos el destinatario
 
   //Expect for ">" character.
   if(!_tf.find(">")) return 0;
 
   //SMS text.
-  _cell << msg << _BYTE(ctrlz) << _BYTE(cr) << endl; 
+  (*_cell) << msg << _BYTE(ctrlz) << _BYTE(cr) << endl; 
 
   //Expect "OK".
   if(!_tf.find("OK"))
@@ -139,10 +139,10 @@ int QuectelM10::attachGPRS(char* domain, char* dom1, char* dom2)
    
   _tf.setTimeout(_GSM_DATA_TOUT_);	//Timeout for expecting modem responses.
  
-  _cell.flush();
+  _cell->flush();
   
   //Attach to GPRS service.
-  _cell << "AT+CGATT=1" <<  _BYTE(cr) << endl;
+  (*_cell) << "AT+CGATT=1" <<  _BYTE(cr) << endl;
   
   //Expect "OK".
   if(!_tf.find("OK")) return 0;
@@ -150,7 +150,7 @@ int QuectelM10::attachGPRS(char* domain, char* dom1, char* dom2)
   delay(500);
   
   //Set the context 0 as FGCNT.
-  _cell << "AT+QIFGCNT=0" <<  _BYTE(cr) << endl;
+  (*_cell) << "AT+QIFGCNT=0" <<  _BYTE(cr) << endl;
   
   //Expect "OK".
   if(!_tf.find("OK")) return 0;
@@ -158,7 +158,7 @@ int QuectelM10::attachGPRS(char* domain, char* dom1, char* dom2)
   delay(200);
 
   //Set bearer type as GPRS, APN, user name and pasword. 
-  _cell << "AT+QICSGP=1,\""<< domain << "\",\""<< dom1 << "\",\"" << dom2 << "\"" << _BYTE(cr) << endl;	
+  (*_cell) << "AT+QICSGP=1,\""<< domain << "\",\""<< dom1 << "\",\"" << dom2 << "\"" << _BYTE(cr) << endl;	
 
   //Expect "OK".
   if(!_tf.find("OK")) return 0;
@@ -166,7 +166,7 @@ int QuectelM10::attachGPRS(char* domain, char* dom1, char* dom2)
   delay(200);
   
   //Disable the function of MUXIP.
-  _cell << "AT+QIMUX=0" <<  _BYTE(cr) << endl;
+  (*_cell) << "AT+QIMUX=0" <<  _BYTE(cr) << endl;
   
   //Expect "OK". ATTENTION, RETURNS ERROR BUT IT DOES NOT MATTER!!!!
   if(!_tf.find("OK")) ;//return 0;
@@ -174,7 +174,7 @@ int QuectelM10::attachGPRS(char* domain, char* dom1, char* dom2)
   delay(200);
 
   //Set the session mode as transparent.
-  _cell << "AT+QIMODE=1" <<  _BYTE(cr) << endl;
+  (*_cell) << "AT+QIMODE=1" <<  _BYTE(cr) << endl;
   
   //Expect "OK". ATTENTION, RETURNS ERROR BUT IT DOES NOT MATTER!!!!
   if(!_tf.find("OK")) ;//return 0;
@@ -182,8 +182,8 @@ int QuectelM10::attachGPRS(char* domain, char* dom1, char* dom2)
   delay(200);	
 
   //Use domain name as the address to stablish a TCP session.
-  //  _cell << "AT+QIDNSIP=1" <<  _BYTE(cr) << endl;
-  _cell << "AT+QIDNSIP=0" <<  _BYTE(cr) << endl;
+  //  (*_cell) << "AT+QIDNSIP=1" <<  _BYTE(cr) << endl;
+  (*_cell) << "AT+QIDNSIP=0" <<  _BYTE(cr) << endl;
   
   //Expect "OK". ATTENTION, RETURNS ERROR BUT IT DOES NOT MATTER!!!!
   if(!_tf.find("OK")) ;//return 0;
@@ -191,7 +191,7 @@ int QuectelM10::attachGPRS(char* domain, char* dom1, char* dom2)
   delay(200);	
   
   //Register the TCP/IP stack.
-  _cell << "AT+QIREGAPP" <<  _BYTE(cr) << endl;
+  (*_cell) << "AT+QIREGAPP" <<  _BYTE(cr) << endl;
   
   //Expect "OK". ATTENTION, RETURNS ERROR BUT IT DOES NOT MATTER!!!!
   if(!_tf.find("OK")) ;//return 0;
@@ -199,7 +199,7 @@ int QuectelM10::attachGPRS(char* domain, char* dom1, char* dom2)
   delay(200);	
   
   //Activate FGCNT.
-  _cell << "AT+QIACT" <<  _BYTE(cr) << endl;
+  (*_cell) << "AT+QIACT" <<  _BYTE(cr) << endl;
 
   //Expect "OK". 
   if(_tf.find("OK"))
@@ -226,10 +226,10 @@ int QuectelM10::dettachGPRS()
    
   _tf.setTimeout(_GSM_CONNECTION_TOUT_);
 
-  _cell.flush();
+  _cell->flush();
 
   //GPRS dettachment.
-  _cell << "AT+CGATT=0" <<  _BYTE(cr) << endl;
+  (*_cell) << "AT+CGATT=0" <<  _BYTE(cr) << endl;
   
   if(!_tf.find("OK")) 
   {
@@ -240,10 +240,10 @@ int QuectelM10::dettachGPRS()
   
   // Commented in initial trial code!!
   //Stop IP stack.
-  //_cell << "AT+WIPCFG=0" <<  _BYTE(cr) << endl;
+  //(*_cell) << "AT+WIPCFG=0" <<  _BYTE(cr) << endl;
   //	if(!_tf.find("OK")) return 0;
   //Close GPRS bearer.
-  //_cell << "AT+WIPBR=0,6" <<  _BYTE(cr) << endl;
+  //(*_cell) << "AT+WIPBR=0,6" <<  _BYTE(cr) << endl;
 
   setStatus(READY);
   return 1;
@@ -257,10 +257,10 @@ int QuectelM10::connectTCP(const char* server, int port)
   if (getStatus()!=ATTACHED)
     return 0;
 
-  _cell.flush();
+  _cell->flush();
   
   //Visit the remote TCP server.
-  _cell << "AT+QIOPEN=\"TCP\",\"" << server << "\"," << port <<  _BYTE(cr) << endl;
+  (*_cell) << "AT+QIOPEN=\"TCP\",\"" << server << "\"," << port <<  _BYTE(cr) << endl;
   
    //Expect "CONNECT". 
   if(_tf.find("CONNECT"))
@@ -282,15 +282,15 @@ int QuectelM10::disconnectTCP()
   _tf.setTimeout(_GSM_CONNECTION_TOUT_);
 
 
-  _cell.flush();
+  _cell->flush();
 
   //Switch to AT mode.
-  _cell << "+++" << endl;
+  (*_cell) << "+++" << endl;
   
   delay(200);
   
   //Close TCP client and deact.
-  _cell << "AT+QICLOSE" << endl;
+  (*_cell) << "AT+QICLOSE" << endl;
 
   //If remote server close connection AT+QICLOSE generate ERROR
   /*if(_tf.find("OK"))
@@ -318,22 +318,22 @@ int QuectelM10::connectTCPServer(int port)
 
   _tf.setTimeout(_GSM_CONNECTION_TOUT_);
 
-  _cell.flush();
+  _cell->flush();
 
   // Set port
-  _cell << "AT+QILPORT=\"TCP\"," << port << endl;
+  (*_cell) << "AT+QILPORT=\"TCP\"," << port << endl;
   if(!_tf.find("OK")) // Should we leave Status in ERROR?
     return 0;
     
   delay(200);  
   
   //Read Local Port, if not read, server get error.
-  _cell << "AT+QILOCIP" << endl;
+  (*_cell) << "AT+QILOCIP" << endl;
     
   delay(500);  
   
   // Open server
-  _cell << "AT+QISERVER" << endl;
+  (*_cell) << "AT+QISERVER" << endl;
   if(_tf.find("OK"))
   {
     setStatus(TCPSERVERWAIT);
@@ -370,10 +370,10 @@ int QuectelM10::write(const uint8_t* buffer, size_t sz)
   
   _tf.setTimeout(_GSM_DATA_TOUT_);
 
-  _cell.flush();
+  _cell->flush();
     
   for(int i=0;i<sz;i++)
-    _cell << _BYTE(buffer[i]);
+    (*_cell) << _BYTE(buffer[i]);
   
   //Not response for a write.
   /*if(_tf.find("OK"))
@@ -411,9 +411,9 @@ int QuectelM10::read(char* result, int resultlength)
     return 0;
     
    _tf.setTimeout(_GSM_DATA_TOUT_);
-   _cell.flush();
-  _cell << "AT+QENG=1,0" << endl; 
-  _cell << "AT+QENG?" << endl; 
+   _cell->flush();
+  (*_cell) << "AT+QENG=1,0" << endl; 
+  (*_cell) << "AT+QENG?" << endl; 
   if(!_tf.find("+QENG:"))
     return 0;
 
@@ -423,7 +423,7 @@ int QuectelM10::read(char* result, int resultlength)
   lac=_tf.getValue();
   cellid=_tf.getValue();
   _tf.find("OK");
-  _cell << "AT+QENG=1,0" << endl; 
+  (*_cell) << "AT+QENG=1,0" << endl; 
   _tf.find("OK");
   return 1;
 }
@@ -438,14 +438,14 @@ boolean QuectelM10::readSMS(char* msg, int msglength, char* number, int nlength)
     return false;
   
   _tf.setTimeout(_GSM_DATA_TOUT_);
-  _cell.flush();
-  _cell << "AT+CMGL=\"REC UNREAD\",1" << endl; 
+  _cell->flush();
+  (*_cell) << "AT+CMGL=\"REC UNREAD\",1" << endl; 
   if(_tf.find("+CMGL: "))
   {
     index=_tf.getValue();
     _tf.getString("\"+", "\"", number, nlength);
     _tf.getString("\n", "\nOK", msg, msglength);
-    _cell << "AT+CMGD=" << index << endl;
+    (*_cell) << "AT+CMGD=" << index << endl;
     _tf.find("OK");
     return true;
   };
@@ -464,9 +464,9 @@ boolean QuectelM10::readCall(char* number, int nlength)
   if(_tf.find("+CLIP: \""))
   {
     _tf.getString("", "\"", number, nlength);
-    _cell << "ATH" << endl;
+    (*_cell) << "ATH" << endl;
     delay(1000);
-    _cell.flush();
+    _cell->flush();
     return true;
   };
   return false;
@@ -479,9 +479,9 @@ boolean QuectelM10::call(char* number, unsigned int milliseconds)
   
   _tf.setTimeout(_GSM_DATA_TOUT_);
 
-  _cell << "ATD" << number << ";" << endl;
+  (*_cell) << "ATD" << number << ";" << endl;
   delay(milliseconds);
-  _cell << "ATH" << endl;
+  (*_cell) << "ATH" << endl;
 
   return true;
  
@@ -495,11 +495,11 @@ int QuectelM10::setPIN(char *pin)
       
   _tf.setTimeout(_GSM_DATA_TOUT_);	//Timeout for expecting modem responses.
 
-  _cell.flush();
+  _cell->flush();
 
   //AT command to set PIN.
-  _cell << "AT+CPIN=" << pin <<  _BYTE(cr) << endl; // Establecemos el pin
-  //_cell << "AT+CPIN=6104" << _BYTE(cr) << endl; // Establecemos el pin
+  (*_cell) << "AT+CPIN=" << pin <<  _BYTE(cr) << endl; // Establecemos el pin
+  //(*_cell) << "AT+CPIN=6104" << _BYTE(cr) << endl; // Establecemos el pin
 
   //Expect "OK".
   if(!_tf.find("OK"))

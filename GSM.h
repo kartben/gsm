@@ -18,7 +18,7 @@ class GSM
     int _status;
     
   protected:
-    NewSoftSerial _cell;
+    HardwareSerial* _cell;
     WideTextFinder _tf;
     inline void setStatus(GSM_st_e status) { _status = status; }
 

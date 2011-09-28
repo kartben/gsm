@@ -26,7 +26,7 @@
   // constructors 
   //default timeout is 5 seconds
   
-  WideTextFinder::WideTextFinder(NewSoftSerial &stream, int timeout) :
+  WideTextFinder::WideTextFinder(HardwareSerial &stream, int timeout) :
                   nSerialStream(&stream) 
   { 
     this->timeout = timeout * 1000L;     

@@ -4,15 +4,16 @@
 #define _GSM_TXPIN_ 2
 #define _GSM_RXPIN_ 3
 
-GSM::GSM():_cell(_GSM_TXPIN_,_GSM_RXPIN_),_tf(_cell, 10),_status(IDLE)
+GSM::GSM(): _tf(Serial2, 10)
 {
-  
+	_status = IDLE ;
+	_cell = &Serial2 ;
 };
 
 
 int GSM::begin(char* pin)
 {
-  _cell.begin(9600);
+  _cell->begin(9600);
   setStatus(IDLE);
   return start(pin);
 }
